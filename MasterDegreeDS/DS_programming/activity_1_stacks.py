@@ -43,11 +43,29 @@ def print_stack(s, msg_bef=None, msg_after=None):
         print("|" + "_" * (max_len + 2) + "|")
         print(msg_after + "\n" if msg_after else "\n")
 
+def print_queue(s, msg_bef=None, msg_after=None):
+    # Definimos la función auxiliar print_queue, que nos permitirá
+    # visualizar una cola
+    if msg_bef:
+        print(msg_bef)
 
-stack_scifi = []
-stack_fantasy = []
-stack_crime_fiction = []
-stack_comics = []
+    if len(s) == 0:
+        max_len = 10
+    else:
+        max_len = sum([len(e)+2 for e in s]) + 1
+
+    print("_"*(max_len+2)+"\n")
+    print("  " + "  ".join(s))
+    print("_"*(max_len+2))
+
+    print(msg_after+"\n" if msg_after else "\n")
+
+
+sq_scifi = []
+sq_fantasy = []
+sq_crime_fiction = []
+sq_comics = []
+
 
 """
 for (book1, book2, book3, book4) in zip(sci_fi, fantasy, crime_fiction, comics):
@@ -58,16 +76,30 @@ for (book1, book2, book3, book4) in zip(sci_fi, fantasy, crime_fiction, comics):
 """
 
 
-#Create the stacks
+#Create the stacks and queues
 
 for book in range(len(sci_fi)):
-    stack_scifi.append(sci_fi[book])
+    sq_scifi.append(sci_fi[book])
 for book in range(len(fantasy)):
-    stack_fantasy.append(fantasy[book])
+    sq_fantasy.append(fantasy[book])
 for book in range(len(crime_fiction)):
-    stack_crime_fiction.append(crime_fiction[book])
+    sq_crime_fiction.append(crime_fiction[book])
 for book in range(len(comics)):
-    stack_comics.append(comics[book])
+    sq_comics.append(comics[book])
 
 
-print_stack(stack_comics)
+print_stack(sq_comics)#stack
+
+print_queue(sq_comics)#queue
+
+sci_fi_last = sq_comics.pop(0)
+fantasy_last = sq_fantasy(0)
+crime_fiction_last = sq_crime_fiction(0)
+comics_last = sq_comics(0)
+
+
+"""
+e = sq_comics.pop(1)
+print_queue(sq_comics, "Queue after deleting another element:",
+            "The element removed was: {}".format(e))
+"""
