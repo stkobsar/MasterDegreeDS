@@ -61,41 +61,21 @@ def print_queue(s, msg_bef=None, msg_after=None):
     print(msg_after+"\n" if msg_after else "\n")
 
 
-sq_scifi = []
-sq_fantasy = []
-sq_crime_fiction = []
-sq_comics = []
+print_stack(comics)#stack
+
+print_queue(comics)#queue
+clase_stack = ["sq_scifi", "sq_fantasy", "sq_crime_fiction", "sq_comics", "sq_comics"]
+
+print(sci_fi)
+print(sq_scifi)
 
 
-"""
-for (book1, book2, book3, book4) in zip(sci_fi, fantasy, crime_fiction, comics):
-    stack_scifi.append(book1)
-    stack_fantasy.append(book2)
-    stack_crime_fiction.append(book3)
-    stack_comics.append(book4)
-"""
 
 
-#Create the stacks and queues
-
-for book in range(len(sci_fi)):
-    sq_scifi.append(sci_fi[book])
-for book in range(len(fantasy)):
-    sq_fantasy.append(fantasy[book])
-for book in range(len(crime_fiction)):
-    sq_crime_fiction.append(crime_fiction[book])
-for book in range(len(comics)):
-    sq_comics.append(comics[book])
 
 
-print_stack(sq_comics)#stack
 
-print_queue(sq_comics)#queue
 
-sci_fi_last = sq_comics.pop(0)
-fantasy_last = sq_fantasy(0)
-crime_fiction_last = sq_crime_fiction(0)
-comics_last = sq_comics(0)
 
 
 """
@@ -103,3 +83,7 @@ e = sq_comics.pop(1)
 print_queue(sq_comics, "Queue after deleting another element:",
             "The element removed was: {}".format(e))
 """
+#print(sci_fi_last, " ", crime_fiction_last, " ", fantasy_last ," ", comics_last, " ", comics_last_2)
+
+
+
