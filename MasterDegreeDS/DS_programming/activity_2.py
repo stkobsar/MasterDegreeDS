@@ -1,5 +1,9 @@
 import MasterDegreeDS.DS_programming.activity_1_stacks as ac
 
+"""
+Operate with the stack of activity 1
+"""
+
 stack_1 = ac.final_stack(ac.sci_fi, ac.crime_fiction, ac.fantasy, ac.comics)
 
 """
