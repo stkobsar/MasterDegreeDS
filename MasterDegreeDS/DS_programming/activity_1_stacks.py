@@ -63,29 +63,3 @@ def final_stack(sci_fi, crime_fiction, fantasy, comics):
 if __name__ == "__main__":
     pila1 = final_stack(sci_fi, crime_fiction, fantasy, comics)
     print_stack(pila1)
-
-
-
-#clase_stack = ["sq_scifi", "sq_fantasy", "sq_crime_fiction", "sq_comics", "sq_comics"]
-
-#print(sci_fi.pop(-1), " ", crime_fiction.pop(-1), " ", fantasy.pop(-1), " ", comics.pop(-1)," ", comics.pop(-1))
-
-
-
-
-
-
-
-
-
-
-
-"""
-e = sq_comics.pop(1)
-print_queue(sq_comics, "Queue after deleting another element:",
-            "The element removed was: {}".format(e))
-"""
-#print(sci_fi_last, " ", crime_fiction_last, " ", fantasy_last ," ", comics_last, " ", comics_last_2)
-
-
-
