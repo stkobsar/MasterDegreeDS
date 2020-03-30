@@ -22,11 +22,6 @@ crime_fiction = ["Murder on the Orient Express", "The Cartel", "The Girl with th
 comics = ["The Avengers vol. 3", "Spiderman vol. 16", "Ghost Rider vol. 2", "Spiderman vol. 15",
           "John Constantine vol. 5", "Batman vol. 13", "Green Arrow vol. 1"]
 
-print("Sci_fi books: ", len(sci_fi))
-print("fantasy books: ", len(fantasy))
-print("crime_fiction books: ", len(crime_fiction))
-print("comics books: ", len(comics))
-
 
 def print_stack(s, msg_bef=None, msg_after=None):
     # Definimos la función auxiliar print_stack, que nos permitirá
@@ -43,31 +38,38 @@ def print_stack(s, msg_bef=None, msg_after=None):
         print("|" + "_" * (max_len + 2) + "|")
         print(msg_after + "\n" if msg_after else "\n")
 
-def print_queue(s, msg_bef=None, msg_after=None):
-    # Definimos la función auxiliar print_queue, que nos permitirá
-    # visualizar una cola
-    if msg_bef:
-        print(msg_bef)
 
-    if len(s) == 0:
-        max_len = 10
-    else:
-        max_len = sum([len(e)+2 for e in s]) + 1
+def final_stack(sci_fi, crime_fiction, fantasy, comics):
 
-    print("_"*(max_len+2)+"\n")
-    print("  " + "  ".join(s))
-    print("_"*(max_len+2))
+    final_pila = []
 
-    print(msg_after+"\n" if msg_after else "\n")
+    clase_stack = [sci_fi, crime_fiction, fantasy, comics, comics]
 
 
-print_stack(comics)#stack
+    while True:
 
-print_queue(comics)#queue
-clase_stack = ["sq_scifi", "sq_fantasy", "sq_crime_fiction", "sq_comics", "sq_comics"]
+        #Each iteration until exit condition is met
+        for pila in clase_stack:
+            if pila:
+                final_pila.append(pila.pop(-1))
 
-print(sci_fi)
-print(sq_scifi)
+         #exit condition
+        if not sci_fi and not crime_fiction and not fantasy and not comics:
+            break
+
+    return final_pila
+
+
+if __name__ == "__main__":
+    pila1 = final_stack(sci_fi, crime_fiction, fantasy, comics)
+    print_stack(pila1)
+
+
+
+#clase_stack = ["sq_scifi", "sq_fantasy", "sq_crime_fiction", "sq_comics", "sq_comics"]
+
+#print(sci_fi.pop(-1), " ", crime_fiction.pop(-1), " ", fantasy.pop(-1), " ", comics.pop(-1)," ", comics.pop(-1))
+
 
 
 
