@@ -10,9 +10,6 @@ df_nasa = pd.read_json(json_data)
 df_nasa = df_nasa["year"].dropna()
 
 
-
-
-
 #asking for pritn the head of the dataframe
 
 head = pd.DataFrame.head(df_nasa)
