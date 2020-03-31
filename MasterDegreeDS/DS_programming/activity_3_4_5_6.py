@@ -10,13 +10,13 @@ df_nasa = pd.read_json(json_data)
 df_nasa = df_nasa["year"].dropna()
 
 
-#asking for pritn the head of the dataframe
+#asking for print the head of the dataframe
 
 head = pd.DataFrame.head(df_nasa)
 print(head)
 
 year_list = df_nasa.tolist()
-
+print(year_list)
 new_list_year = [ int(str(year)[:4]) for year in year_list]
 
 #how many of them are repeated
