@@ -35,7 +35,7 @@ def asteroid_mass(dictionary):
 
 asteroid_mass(dict_nasa)
 
-# the same function above but using only one line
+# the same goal above but using only one line
 
 mass_mean =  np.mean([ mean["mass"] for mean in dict_nasa.values() if mean["id"] > 5000 and not np.isnan(mean["mass"])])
 
