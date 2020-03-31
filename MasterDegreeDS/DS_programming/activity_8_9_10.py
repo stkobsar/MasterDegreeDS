@@ -24,7 +24,6 @@ La función debe de estar preparada para trabajar con diccionarios muy grandes. 
 
 Llamad a la función definida con el diccionario del ejercicio anterior como parámetro.
 """
-#mass_asteroids = df_nasa["recclass"]
 
 def asteroid_mass(dictionary):
     df_nasa = pd.DataFrame(dictionary)
@@ -34,9 +33,10 @@ def asteroid_mass(dictionary):
     print(asteroids_H6["mass"])
     print(asteroids_H6["mass"].mean())
 
-#asteroid_mass(dict_nasa)
+asteroid_mass(dict_nasa)
 
-##################################
+# the same function above but using only one line
+
 mass_mean =  np.mean([ mean["mass"] for mean in dict_nasa.values() if mean["id"] > 5000 and not np.isnan(mean["mass"])])
 
 print(mass_mean)
