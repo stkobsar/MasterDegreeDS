@@ -1,0 +1,1 @@
+El conjunto de datos `pulitzer-circulation-data.csv` es de [FiveThirtyEight](https://fivethirtyeight.com/), una web que realiza artículos basados en datos sobre deportes y noticias, y que pone a disposición pública los [conjuntos de datos](https://github.com/fivethirtyeight/data) que recoge para sus artículos.
