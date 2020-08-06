@@ -1,0 +1,345 @@
+---
+title: "A_1"
+author: "Stefanie KObsar"
+date: "4/1/2020"
+output:
+   html_document:
+      toc: yes
+---
+
+
+## El objetivo de esta actividad es realizar una puesta a punto del dataset para que el posterior análisis pueda ser quantitativo, reproducible y comparable con otras variables. 
+
+Las autoridades sanitarias desean realizar un estudio del peso al nacer de los niños y niñas nacidos en España
+en el último año. Para ello, han realizado un muestreo de 300 niños y niñas nacidos en distintos hospitales
+del país. El conjunto de datos BWn.csv contiene estos datos.
+La estructura del conjunto de datos es la siguiente. Cada fila corresponde a un nacimiento y para cada uno,
+se especifican las siguientes variables:
+
+
+Id: identificador numérico.
+HP: nombre del hospital.
+City: nombre de la ciudad donde se ha producido el nacimiento.
+Time: hora del nacimiento (valor entre 0 y 24).
+Day: día de la semana (valor entre 1 y 7).
+BW: peso al nacer.
+BPD: diámetro biparietal (en mm), determinado por ultrasonidos, medido antes de nacer.
+AD: diámetro abdominal (en mm), determinado por ultrasonidos, medido antes de nacer.
+Sex: sexo del bebé.
+Ge: semanas de gestación.
+Sm: si la madre es fumadora (’S’ en caso afirmativo, ’N’ en caso negativo).
+
+```{r}
+df_BWn <- read.csv("BWn.csv", sep=";")
+head(df_BWn)
+```
+
+Los criterios a aplicar para este preproceso son:
+
+*Los nombres de las ciudades empiezan con una letra mayúscula y van seguidos por letras minúsculas.
+
+*Los nombres de los hospitales estandarizados son los que aparecen en la lista que se muestra más
+adelante. Cualquier variación sobre estos nombres debe normalizarse.
+
+*Se proporciona además una lista de los hospitales y de las ciudades a los que corresponden. En caso de
+inconstistencias, prevalece el dato del hospital y por tanto, la ciudad se modifica para adecuarse.
+
+*En variables cuantitativas continuas, el símbolo para expresar la coma decimal es el punto.
+
+*El tiempo, expresado como un valor numérico de 0 a 24, debe expresarse como HH:MM. No es necesario
+guardar el valor de los segundos.
+
+*Los días de la semana deben ser: Lunes, Martes, Miércoles, Jueves, Viernes, Sábado, Domingo. En el
+fichero, el número 1 corresponde a Lunes y consecutivamente hasta el 7 que corresponde a Domingo.
+
+*Deben cambiarse los valores numéricos por el nombre del día.
+
+*El peso (variable BW) debe expresarse de forma numérica y en gramos. Por ejemplo, los valores del
+tipo "3.300gr" o "3.3kg" deben guardarse como un dato numérico de valor 3300.
+
+*Los valores de diámetro biparietal y abdominal deben expresarse en milímetros y las variables deben ser
+numéricas. En caso que el formato de los datos sean de tipo carácter, debe transformarse a numérico
+para su posterior análisis.
+
+*El sexo debe codificarse como "F" para referirse a femenino y "M" masculino.
+
+*Las semanas de gestación deben redondearse al valor entero más próximo.
+ 
+*En caso de realizar cambios sobre los datos, éstos deben ser identificados y explicados en el informe.
+
+```{r}
+#library(tidyverse)
+
+cities <- df_BWn$City
+head(cities)#vector of integers
+```
+
+```{r}
+cities_char <- as.character(cities)
+cities_capital <- stringr::str_to_title(cities_char)
+head(cities_capital)
+```
+
+```{r}
+cities_char <- as.character(cities)
+cities_capital <- stringr::str_to_title(cities_char)
+head(cities_capital)
+df_BWn["City"] <- cities_capital
+head(df_BWn)
+```
+
+NOMBRES ESTANDARIZADOS DE LOS HOSPITALES:
+
+H.U.La Paz = Madrid 
+H.Clínic = Barcelona
+H.U.Vall d’Hebron = Barcelona
+H.U.12 de octubre = Madrid
+H.G.U.Gregorio Marañón = Madrid
+H.U.Politècnic La Fe = Valencia
+H.U.Quirón Dexeus = Barcelona
+C.U.Navarra = Pamplona
+H.U.de Bellvitge = Barcelona
+H.M.I. Virgen de las Nieves = Granada
+H.U.Virgen del Rocío = Sevilla
+
+
+```{r}
+
+list_HP <- as.character(df_BWn$HP)
+len_list_HP <- c(1:length(list_HP))
+
+for (i in len_list_HP) {
+  if (list_HP[i] == "H.G.U.Gregorio Mara\xf1\xf3n" ) {
+  list_HP[i] <- "H.G.U.Gregorio Marañón"
+  }  
+  if (list_HP[i] == "H.U.Quir\xf3n Dexeus" ) {
+  list_HP[i] <- "H.U.Quirón Dexeus"
+  } 
+  if (list_HP[i] == "H.U.Quir\xf3n Dexeus" ) {
+  list_HP[i] <- "H.U.Quirón Dexeus"
+  } 
+  if (list_HP[i] == "H.U.Polit\xe8cnic La Fe" ) {
+  list_HP[i] <- "H.U.Politècnic La Fe"
+  } 
+  if (list_HP[i] == "H.Cl\xednic" ) {
+  list_HP[i] <- "H.Clínic"
+  } 
+  if (list_HP[i] == "H.U.Virgen del Roc\xedo" ) {
+  list_HP[i] <- "H.U.Virgen del Rocío"
+  }
+  
+}
+
+df_BWn["HP"] <- list_HP
+head(df_BWn)
+```
+
+
+```{r}
+#En variables cuantitativas continuas, el símbolo para expresar la coma decimal es el punto.
+
+time <- df_BWn$Time
+Ge <- df_BWn$Ge
+
+time_dot <- as.numeric(gsub(",", ".", gsub("\\.", "", time)))
+Ge_dot <- as.numeric(gsub(",", ".", gsub("\\.", "", Ge)))
+
+df_BWn["Time"] <- time_dot
+df_BWn["Ge"] <- Ge_dot
+head(df_BWn)
+```
+
+
+
+
+```{r}
+#El tiempo, expresado como un valor numérico de 0 a 24, debe expresarse como HH:MM. No es necesario guardar el valor de los segundos.
+time <- (df_BWn$Time)
+df_BWn$Time <- format(as.POSIXct((time) * 86400, origin = "1970-01-01", tz = "UTC"), "%H:%M")
+head(df_BWn)
+```
+```{r}
+#Los días de la semana deben ser: Lunes, Martes, Miércoles, Jueves, Viernes, Sábado, Domingo. En el fichero, el número 1 corresponde a Lunes y consecutivamente hasta el 7 que corresponde a Domingo.
+
+list_day <- df_BWn$Day
+len_list_day <- c(1:length(list_day))
+
+for (i in len_list_day) {
+  if (list_day[i] == 1) {
+  list_day[i] <- "Lunes"
+  }  
+  if (list_day[i] == 2 ) {
+  list_day[i] <- "Martes"
+  } 
+  if (list_day[i] == 3 ) {
+  list_day[i] <- "Miércoles"
+  } 
+  if (list_day[i] == 4 ) {
+  list_day[i] <- "Jueves"
+  } 
+  if (list_day[i] == 5 ) {
+  list_day[i] <- "Viernes"
+  } 
+  if (list_day[i] == 6 ) {
+  list_day[i] <- "Sábado"
+  }
+  if (list_day[i] == 7 ) {
+  list_day[i] <- "Domingo"
+  }
+  
+}
+
+df_BWn["Day"] <- list_day
+head(df_BWn)
+```
+
+
+
+```{r}
+#El peso (variable BW) debe expresarse de forma numérica y en gramos. Por ejemplo, los valores del tipo "3.300gr" o "3.3kg" deben guardarse como un dato numérico de valor 3300.
+
+BW <-df_BWn$BW
+BW_kg <- gsub("kg","", as.factor(factor(BW)) )
+BW_kg_gr <- gsub("gr", "", as.factor(factor(BW_kg)) )
+BW_mod <- BW_kg_gr
+
+df_BWn["BW"] <- BW_mod
+head(df_BWn)
+```
+
+```{r}
+#Los valores de diámetro biparietal y abdominal deben expresarse en milímetros y las variables deben ser numéricas. En caso que el formato de los datos sean de tipo carácter, debe transformarse a numérico para su posterior análisis.
+bpd <-df_BWn$BPD
+bpd_mod <- gsub("mm", "", paste(bpd))
+bpd_mod_num <- as.numeric(bpd_mod)
+df_BWn["BPD"] <- bpd_mod_num
+
+ad <-df_BWn$AD
+ad_mod <- gsub("mm", "", paste(ad))
+ad_mod_num <- as.numeric(ad_mod)
+df_BWn["AD"] <- ad_mod_num
+
+head(df_BWn)
+
+
+```
+
+```{r}
+#El sexo debe codificarse como "F" para referirse a femenino y "M" masculino.
+
+sex <- df_BWn$Sex
+sex
+
+list_sex <- df_BWn$Sex
+len_list_sex <- c(1:length(list_sex))
+
+for (i in len_list_sex) {
+  if (list_sex[i] == "girl" | list_sex[i] == "f" | list_sex[i] == "fem") {
+    list_sex[i] <- "F"
+  }
+  if (list_sex[i] == "boy" | list_sex[i] == "m") {
+    list_sex[i] <- "M"
+  }
+}
+
+df_BWn["Sex"] <- list_sex
+df_BWn$Sex
+```
+ 
+```{r}
+#Las semanas de gestación deben redondearse al valor entero más próximo.
+ge <- df_BWn$Ge
+ge_round <- format(ge, digits = 2)
+df_BWn["Ge"] <- as.numeric(ge_round)
+head(df_BWn)
+```
+
+##############################################################################################################################################
+
+Analizar la presencia de valores perdidos. 
+
+En el caso de detectar algún valor perdido en las variables cuantitativas realizar una imputación de valores en estas variables. La imputación debe hacerse con los 3 vecinos más cercanos usando la distancia de Gower, usando sólo la información de las variables cuantitativas y dentro de éstas, aquellas que tengan sentido en la imputación de la variable. Después de realizar la imputación es necesario verificar que los valores asignados se han copiado sobre el conjunto de datos originales. Visualizar el resultado de las imputaciones realizadas (para evitar mostrar todo el conjunto de datos, sólo se deben mostrar los registros del conjunto de datos que contienen la imputación realizada).
+```{r}
+library(cluster)
+
+is.na(df_BWn)
+#hay valores perdidos para la variable BPD y AD
+
+df_temp <- df_BWn[, -(1:6)] 
+#quito también BW porque no sé como ponerlo en el formato requerido. 
+
+gower_dist <- daisy(df_temp, metric = c("gower"))
+
+#distancia de gower media = 0,3149
+
+#validar la distancia
+hc1 <- hclust(gower_dist, method = "ward.D" )
+plot(hc1)
+#se observa 3 clusters diferenciados. 
+```
+
+
+```{r}
+gower_dist_mat <- as.matrix(gower_dist) #matriz e distancias entre cada una de las lineas del df
+
+#we have to divide the dat into clusters
+
+cluster1 <- pam(gower_dist_mat, diss = TRUE, k = 3)
+table(cluster1$clustering)
+df_temp_2 <- cbind(df_temp, cluster1$clustering)
+colnames(df_temp_2)[ncol(df_temp_2)] <- c("pam_cluster")
+aggregate(df_temp_2[,(1:2)], list(df_temp_2$pam_cluster), mean)
+
+
+```
+
+
+```{r}
+library(ggplot2)
+
+bw_box <- as.numeric(c(df_BWn$BW))
+boxplot.stats(x = bw_box)
+boxplot(bw_box)
+
+```
+BOXPLOT:
+
+La linea negra que se observa dentro de la caja equivale a la mediana del conjunto de datos analizado, en este caso BW. La intersección entre la linea punteada y la linea continua de los lados superior e inferior de la caja representa a su vez la mediana de los valores comprendidos entre el máximo valor y el valor de la mediana de todo el conjunto; y el mínimo valor y la mediana total, respectivamente. 
+
+Al otro extremo de la linea discontínua, se encuentra un linea continua que representa la imagen del eje vertical equivalente a los valores máximos y mínimos del conjunto de datos. Esencialmente, se divide el el conjunto de datos en 4 partes, o cuartiles. 
+
+El problema en BW es que no he podido encontrar el código para poder poner todos los valores en el mismo rango, y por tanto coexisten valores en kg y gramos en la misma secuencia de datos. Ello provoca que el boxplot sea inconsistente, ya que se están evaluando los datos en un rango incorrecto. 
+
+
+```{r}
+ad_box <- as.numeric(c(df_BWn$AD))
+boxplot.stats(x = ad_box)
+boxplot(ad_box)
+```
+Los valores del set de datos se consideran extremos (outliers) cuando están fuera del rango en una proporción de 1.5 veces del rango formado por los cuartiles más externos. Para valorar si es correcto eliminar los ouliers, hay que evaluar si es estadísitcamente correcto. Para ello existen múltiples tests, y en este caso se usará el test de grubbs para realizar la evaluación. 
+
+```{r}
+library(outliers)
+
+grubbs.test(ad_box)
+```
+Podemos decir que, estadísticamente, sería correcto prescindir del valor 133 sin afectar a la calidad de los datos de manera significativa y manteniendo la integridad. 
+```{r}
+
+# TABLA CON VARIABLES CUALITATIVAS
+
+#Variables cualitativas de df_BWn: ID, HP, City, Time, Day
+
+df_cuali <- df_BWn[, (2:5)]
+library(Hmisc)
+Hmisc::describe(df_cuali)
+```
+```{r}
+#Variables cuantitativas: BW BPD  AD Sex Ge Sm
+
+library(Hmisc)
+df_cuanti <- df_BWn[, (6:11)]
+Hmisc::describe(df_cuanti)
+```
+
+
