@@ -1,0 +1,654 @@
+---
+title: "A4_skobsar"
+author: "Stefanie Kobsar"
+date: "6/12/2020"
+output:
+   html_document:
+      toc: yes
+---
+
+```{r}
+df_seats <-  read.csv("ChildCarSeats1.csv") 
+head(df_seats)
+```
+
+
+- Sales (Ventas unitarias, en miles, en cada ubicación).
+- CompPrice (Precio que cobra el competidor en cada ubicación).
+- Income (Nivel de ingresos comunitarios, en miles de dólares).
+- Advertising (Presupuesto de publicidad local de la empresa en cada ubicación, en miles de dólares).
+- Population (Tamaño de la población en la región, en miles).
+- Price (Precio del producto en cada ubicación).
+- ShelveLoc (Un factor con niveles Bad, Good y Medium que indica la calidad de la ubicación del producto
+en los puntos de venta).
+- Age (Edad media de la población local).
+- Education (Nivel educativo).
+- Urban (Un factor con los niveles Yes y No, que indica si la tienda está en una ubicación rural o urbana).
+- US (Un factor con los niveles Yes y No para indicar si la tienda se encuentra en USA o no).
+
+```{r}
+#type of data
+df_seats <- df_seats[, c((1:6), 9, 8, 7, 10, 11)]
+str(df_seats)
+```
+Las variables categoricas (factor) son ShelveLoc, Urban y US. Todas las demás son variables numéricas (double o integer).
+
+```{r}
+#Presencia de na
+sapply(df_seats, function(x) sum(is.na(x)))
+```
+No hay missing values en el dataframe proporcionado. 
+
+
+
+```{r}
+summary(df_seats)
+```
+
+Sales: Corresponde a los datos de ventas unitarias de sillas, en miles. La media y la mediana estan muy proximas, y eso puede ser un indicativo de una distribución normal. El límite del primer cuartil es 5.390 y el del tercer cuartil 9.160. 
+
+ComPrice: Precio de venta de los competidores. La media y la mediana coinciden exactamente. El rango de precios está comprendido entre 77 y 175. 
+
+Income: Corresponde al nivel de ingresos. La media también es muy próxima a la mediana. El rango es más amplio, ya que comprende valores desde 21 a 120, 
+
+Las varibales anteriores se expresan en función de las diferentes poblaciones. 
+Advertising: Media (6.635) y mediana difieren en 1.6 unidades. El tercer cuartil empieza en 12. El valor máximo es de 29, es posible que este valor cree el desplazamiento de la mediana. Hay que evaluar los outliers de esta variable. 
+
+Population: Tamaño de cada una de las poblaciones, en miles. El rango es desde 139 a 509. Se puede ver que se trabaja con poblaciones de tamaños dispares. La media se encuentra más cercana a los rangos inferiores que a los superiores (264.8). La media y la mediana son semejantes. 
+
+Price: Precio del producto en cada ubicación. Se observa una variación importante en el precio dependiendo de donde es vendido el producto. 
+
+Age: edad media de la población local. Se observa que la media es de 53 años. Se observa que el 75% de la población se encuentra por debajo de los 66 años. 
+
+Shevloc, urban y US: Son variables dicotómicas. 
+
+```{r}
+boxplot(df_seats$Sales~df_seats$ShelveLoc)
+```
+ShelveLoc es la variable que indica la calidad de la ubicación del producto
+en los puntos de venta. En este caso hay 3 niveles: bad, medium y good. Se puede ver el numero de ventas podría estar condicionado por la ubicación de los productos en la tienda. 
+
+Se observa que la media de ventas aumenta respecto a las ubicaciones (media(bad)<media(medium)<media(good)). Se observa que en medium existen algunos datos outliers. Esto puede ser debido a la dificultad para clasificar las ubicaciones en únicamente tres niveles. 
+
+Este análisis puede darnos una idea preliminar de que la ubicación puede ser un factor relevante. Habría que correlacionar esta variable con la demás para encontrar alguna relación de significancia. 
+
+```{r}
+boxplot(df_seats$Sales~df_seats$Urban)
+```
+Urban es un factor con los niveles Yes y No, que indica si la tienda está en una ubicación rural o urbana. Al parecer, no existe ninguna diferencia significativa en este factor en concreto en relación a las ventas. Puede observarse que el rango de valores en función de Urban~Yes está ligeramente más acotado que el de Urban~No, pero a su vez se observan outliers en Urban~Yes, lo que hace que el análisis preliminar no sea muy concluyente. 
+
+```{r}
+boxplot(df_seats$Sales~df_seats$US)
+```
+US es un factor con los niveles Yes y No para indicar si la tienda se encuentra en USA o no. Se puede apreciar que la mayor parte de las ventas se encuentras en USA, aunque las medias de ambos subsets son próximas. 
+
+Que las medias sena próximas entre si no nos da mucha información ya que puede deberse a la casualidad, puede ser una consecuencia del teorema del límite central o puede ser in dato interesante siempre y cuando se contextualice correctamente. 
+
+#################### REPRESENTACIÓN GRÁFICA ######################
+
+```{r}
+library(ggplot2)
+
+ggplot(df_seats, aes(x=as.factor(ShelveLoc), fill=as.factor(ShelveLoc) )) + 
+  geom_bar( ) +
+  scale_fill_brewer(palette = "Set3") +
+  theme(legend.position="none")
+```
+```{r}
+ggplot(df_seats, aes(x=as.factor(Urban), fill=as.factor(Urban) )) + 
+  geom_bar( ) +
+  scale_fill_brewer(palette = "Set3") +
+  theme(legend.position="none")
+```
+```{r}
+ggplot(df_seats, aes(x=as.factor(US), fill=as.factor(US) )) + 
+  geom_bar( ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme(legend.position="none")
+```
+
+```{r}
+pairs(df_seats[,1:8], pch = 19, lower.panel = NULL)
+```
+
+```{r}
+ggplot(df_seats, aes(x=CompPrice, y=Price)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm)   # Add linear regression line 
+                             #  (by default includes 95% confidence region)
+```
+```{r}
+ggplot(df_seats, aes(x=Sales, y=Price)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm)   # Add linear regression line 
+                             #  (by default includes 95% confidence region)
+```
+```{r}
+ggplot(df_seats, aes(x=CompPrice, y=Population)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm)   # Add linear regression line 
+                             #  (by default includes 95% confidence region)
+```
+
+```{r}
+ggplot(df_seats, aes(fill=Population, y=Sales, x=Education)) + 
+    geom_bar(position="dodge", stat="identity")
+```
+```{r}
+ggplot(df_seats, aes(fill=Advertising, y=Sales, x=Education)) + 
+    geom_bar(position="dodge", stat="identity",)
+```
+
+```{r}
+ggplot(df_seats, aes(fill=Population, y=Advertising, x=Education)) + 
+    geom_bar(position="dodge", stat="identity")
+```
+
+```{r}
+ggplot(df_seats, aes(fill=Sales, y=ShelveLoc, x=US)) + 
+    geom_bar(position="dodge", stat="identity")
+```
+
+
+
+###################### ESTADÍSTICA INFERENCIAL ###########################
+
+2.1. Intervalo de confianza de la variable Price
+
+
+```{r}
+int_conf_95 <- function(mean_data, desvest, obs) {
+  
+  lower_value <- mean_data-(1.96*(desvest/sqrt(obs)))
+  upper_value <- mean_data+(1.96*(desvest/sqrt(obs)))
+  print(lower_value)
+  print(upper_value)
+  }
+```
+
+```{r}
+mean_price <- mean(df_seats$Price)
+sd_price <- sd(df_seats$Price)
+obs_price <- nrow(df_seats)
+
+int_conf_95(mean_data = mean_price, desvest = sd_price, obs = obs_price)
+```
+El intervalo de confiaza de la variable Price está comprendido entre 113 y 118. 
+
+Comprobación usando la función t.test;
+```{r}
+t.test(df_seats$Price)
+```
+
+2.2. Test de comparación de dos medias
+
+¿Se puede afirmar que en las tiendas de USA (variable US) el promedio de ventas de sillas de coche infantiles (variable Sales) es superior a la media de ventas en tiendas fuera de USA? Realizad los cálculos para un nivel
+de confianza del 95 %.
+
+
+```{r}
+library(dplyr)
+
+df_seats_US <- subset(df_seats, US == "Yes")
+df_seats_no_US <- subset(df_seats, US == "No")
+hist(df_seats_US$Sales)
+```
+```{r}
+hist(df_seats_no_US$Sales)
+```
+Test de normalidad:
+
+```{r}
+library(normtest)
+jb.norm.test(df_seats_US$Sales)
+```
+
+```{r}
+library(normtest)
+jb.norm.test(df_seats_no_US$Sales)
+```
+
+Los dos subsets de datos siguen una distrubución normal, y por lo tanto, pueden ser comparados entre ellos. 
+
+Comparación de varianzas:
+
+```{r}
+var.test(df_seats_US$Sales, df_seats_no_US$Sales)
+```
+
+Se confirma hipotesis alternativa, es decir, las varianzas son significativamente diferentes con un intervalo de confianza del 95%. Se quiere comparar la media de ventas en las tiendas de USA y las de fuera de USA. 
+
+Se establecen las hipótesis:
+
+Ho: μ1 - μ2 = 0
+H1: μ1 - μ2 diferente de 0
+
+Para calcular el estadístico de contraste de dos muestras independientes, se hará una nueva función:
+```{r}
+z_two_samples <- function(mean1, mean2, var1, var2, n1, n2){
+  std_error <- sqrt((var1/n1)+(var2/n2))
+  z <- (mean1-mean2)/(std_error)
+  print(z)
+}
+```
+
+```{r}
+mean_sales_us <- mean(df_seats_US$Sales)
+mean_sales_no_us <- mean(df_seats_no_US$Sales)
+var_sales_us <- var(df_seats_US$Sales)
+var_sales_no_us <- var(df_seats_no_US$Sales)
+nobs_sales_us <- nrow(df_seats_US)
+nobs_sales_no_us <- nrow(df_seats_no_US)
+
+z_sales <- z_two_samples(mean1 = mean_sales_us, mean2 = mean_sales_no_us, var1 = var_sales_us, var2 = var_sales_no_us, n1 = nobs_sales_us, n2 = nobs_sales_no_us)
+
+```
+Para calcular el p valor necesitamos saber los grados de libertad. 
+
+```{r}
+freedom <- function(var1, var2, n1, n2){
+  num <- ((var1/n1)+(var2/n2))^2
+  den1 <- (((var1/n1)^2)/(n1-1))
+  den2 <- (((var2/n2)^2)/(n2-1))
+  degree_freedom <- num/(den1+den2)
+  print(degree_freedom)
+}
+
+dof <- freedom(var1 = var_sales_us, var2 = var_sales_no_us, n1 = nobs_sales_us, n2 = nobs_sales_no_us)
+```
+
+Cálcuo del p-valor
+```{r}
+PZ <- pnorm(z_sales, dof)
+p_value <- 2*PZ
+p_value
+```
+Conclusión: 
+
+En este caso se ha obtenido un p-valor = 0, que es menor que 0.05. En este caso, se rechaza la hipótesis nula, o lo que es lo mismo, las medias de ambas muestras son significativamente diferentes con un 95% de confianza.
+
+Comprobación del cálculo con la funcion t.test. 
+```{r}
+t.test(df_seats_US$Sales, df_seats_no_US$Sales, var.equal=FALSE)
+```
+
+2.3. Constraste no paramétrico
+
+En el apartado anterior, se ha asumido normalidad de la variable ventas (Sales). Independientemente de si
+podemos asumir normalidad, en este apartado os pedimos aplicar un test no paramétrico para responder
+si las ventas de sillas infantiles es superior en USA que fuera de USA. Podéis usar funciones de R para el
+contraste, sin necesidad de realizar el contraste manualmente.
+
+Wilcoxon Signed-Rang Test:
+
+Ho: poblaciones identicas. 
+H1: poblaciones no identicas. 
+
+```{r}
+wilcox.test(df_seats_US$Sales, df_seats_no_US$Sales)
+```
+
+Las poblaciones son significativamente diferentes con un nivel de confianza de 95%.
+
+3. Regresión
+
+3.1. Modelo de regresión lineal
+
+Aplicar un modelo de regresión lineal múltiple que tenga como variables explicativas: Price, Advertising, Age, Population, ShelveLoc, US, y Urban, y como variable dependiente las ventas, la variable Sales. Especificad el nivel base de referencia, usando la función relevel:
+
+- para la variable ShelveLoc, la categoría “Bad”,
+- para la variable US, la categoría “Yes”,
+- para la variable Urban, la categoría “Yes”.
+
+```{r}
+relevel(df_seats$ShelveLoc, ref = "Bad")
+relevel(df_seats$US, ref = "Yes")
+relevel(df_seats$Urban, ref = "Yes")
+
+hist(df_seats$Sales)
+```
+Se refactoriza la variable sales como 0 y 1, ya que es la que se evalúa como variable independiente. Se propone separar la varible sales entre sales<media(sales) como volumen de ventas bajo y sales>media(sales) como volumen de ventas alto. 
+
+```{r}
+df_logit_seats <- df_seats
+
+library(dplyr)
+df_logit_seats <- df_logit_seats %>%
+      mutate(Sales = ifelse(Sales < 7.41,0,1)) #Se configura la variable dependiente como 0, 1 para poder realizar el ajuste de regresión logística. 
+
+
+RLOG_sales <- glm(Sales~Price + Advertising +Age + Population + ShelveLoc + US + Urban, data = df_logit_seats, family = binomial(link = "logit"))
+
+summary(RLOG_sales)
+```
+3.2. Interpretar el modelo
+
+Interpretar el modelo ajustado:
+
+1. ¿Cuál es la calidad del ajuste?
+
+Se puede ver que la calidad del ajuste es buena ya que el error standard de todas las variables es muy bajo. 
+
+
+2. Explicad la contribución de las variables explicativas en el modelo.
+
+Los coeficientes del ajuste son los que estan en la columna estimate.
+Para poder interpretar los coeficientes, se calcula el logaritmo de los mismos. 
+
+```{r}
+exp(coefficients(RLOG_sales))
+```
+
+Si el exponencial del coeficiente es exp(coef)>1, la probabilidad de éxito es mayor que la de fracaso, y a la inversa si exp(coef)<1. Solo se han de interpretar las variables que sean significativas en el ajuste. Estas son las variables marcadas con *** en la columna Pr(>|z|).
+
+Por ello, excluimos el analisis de los coeficientes de Population, USYes y UrbanYes. 
+
+Price: coef = 0,93. Por cada unidad de coste que disminuya el precio, la probabilidad de aumentar el volumne de venta aumenta en un (1-0,93)*100 = 7%.
+
+Advertising: coef = 1,14. Por cada unidad invertida en publicidad, existe un 14% de probabilidad de aumentar el volumen de venta. 
+
+Age: coef = 0,95. Por cada año que disminuye la edad, la probabilidad de aumentar el volumne de venta aumenta en un (1-0,95)*100 = 5%.
+
+ShelveLocGood: coef >>>> 1. La variable de localización en tienda es muy significativa en el volumen de compra. 
+
+ShelveLocMedium: coef >> 5,3. La variable de localización en tienda es significativa en el volumen de compra, aunque en menor medida que ShelveLocGood.
+
+
+Ecuación del modelo:
+```{r}
+varNames <- colnames(model.matrix(RLOG_sales))
+equationStr <- paste(round(coef(RLOG_sales),2),varNames,sep="*",collapse=" + ")
+equationStr <- gsub("*(Intercept)","",equationStr,fixed=TRUE)
+equationStr <- paste(RLOG_sales$terms[[2]],"=",equationStr)
+
+equationStr
+```
+
+3.3. Predicción
+
+Aplicar el modelo de regresión para predecir Sales de:
+
+-una tienda fuera de USA en una zona rural, con precio de 131 dólares, Advertising de 0 dólares, Population de 139.000 personas, Age 40 años y ShelveLoc de tipo Bad. 
+
+
+```{r}
+#Ecuacion del modelo: "Sales = 7.72 -0.07*Price + 0.13*Advertising -0.05*Age + 0*Population + 4.23*ShelveLocGood + 1.67*ShelveLocMedium - 0.22*USYes + 0.19*UrbanYes"
+
+#probabilidad de ventas altas
+prob_sales_1 <- exp(c(Sales = 7.72 -0.07*131 + 0.13*0 -0.05*40 + 0*139000))
+prob_sales_1
+```
+La probabilidad de un aumento de ventas con las variables evaluadas es del -3,1%.  
+
+
+-Comparar el resultado con el de una tienda fuera de USA en una zona rural, con precio 131 dólares, Advertising de 9.000 dólares, población de 139.000 personas, Age 40 años y ShelveLoc de tipo Good. Explicar las diferencias en función de los coeficientes del modelo de regresión.
+
+```{r}
+#Ecuacion del modelo: "Sales = 7.72 -0.07*Price + 0.13*Advertising -0.05*Age + 0*Population + 4.23*ShelveLocGood + 1.67*ShelveLocMedium - 0.22*USYes + 0.19*UrbanYes"
+
+#probabilidad de ventas altas
+prob_sales_2 <- exp(c(Sales = 7.72 -0.07*131 + 0.13*9 -0.05*40 + 4.23*1))
+prob_sales_2
+```
+La probabilidad de un aumento de ventas con las variables evaluadas es alta ya que prob>>1.
+
+
+4. Análisis de la varianza (ANOVA) de un factor
+
+Vamos a realizar un análisis de varianza de un factor: concretamente analizamos la contribución de la variable ShelveLoc en la variable Sales.
+
+4.1. Hipótesis nula y alternativa
+
+Ho: media de la variable estudiada es la misma en los diferentes grupos
+H1: al menos dos medias difieren de forma significativa
+
+4.3. Modelo
+
+Calcular el análisis de varianza, usando la función aov o lm. Interpretar el resultado del análisis, teniendo en cuenta los valores Sum Sq, Mean Sq, F y Pr(>F).
+
+```{r}
+sales <- df_seats$Sales
+shelveloc <- df_seats$ShelveLoc
+df_anova <- data.frame(cbind(sales, shelveloc))
+stack_df_anova <- stack(df_anova)
+plot(sales~shelveloc, data = stack_df_anova)
+```
+
+
+```{r}
+anova_results <- aov(sales~shelveloc, data= stack_df_anova)
+summary(anova_results)
+```
+p>0.05, las medias de las poblaciones son significativamente iguales
+
+F(2,397) = 77.02, p<0.05
+
+El contraste de hipótesis del ANOVA se basa en comprobar si las medias de las muestras difieren más de lo que cabe esperar cuando es cierta, la hipótesis nula.
+
+Esta cuestión acerca de las medias se responde analizando las varianzas. Nos fijamos en las varianzas, porque, cuando queremos saber si algunas medias difieren entre sí, tenemos que valorar la varianza entre estas medias.
+
+F = variabilidad entre grupos / variabilidad intra grupos
+
+4.4. Cálculos
+
+Para profundizar en la comprensión del modelo ANOVA, calculad manualmente la suma de cuadrados intra y la suma de cuadrados entre grupos. 
+
+F = CM(entre)/CM(intra)
+
+CM(intra)=SC(intra)/gl(intra) [suma de cuadrados en sus grados de libertad, lo mismo para CM(entre)]
+
+Se calcula:
+
+s^2 = sum(x-x(mean))/(n-1) = SC/gl
+
+SC(entre)=sum(xi - total_mean)/n-1
+SC(intra)=sum(xij - mean)/n-1
+
+SC(total) = SC(entre) + SC(intra)
+gl(total) = gl(entre) + gl(intra)
+
+
+
+4.5. Efectos de los niveles
+
+Proporcionad la estimación de los efectos de los niveles del factor ShelveLoc. También, proporcionad la
+estimación de la varianza del error.
+
+```{r}
+#Efectos de los niveles
+
+efecto <- 832.8/2146.5
+efecto
+```
+el efecto de los niveles se puede interpretar como porcentaje de variabilidad explicada en las ventas debido a los distintos valores de ShelveLoc (bad. medium, good). Parece que el análisis aisaldo de estas dos variables arroja que la colocación en la tienda no afecta de manera muy significativa ya que efecto << 1.
+
+La varianza del error:
+
+- Cuadrados Medios del Error = Intravarianza (varianza dentro de los niveles, conocida como varianza residual o de error) = 5,4
+
+Una de las condiciones para que el ANOVA de una via arroje buenos resultados es la independecia de sus datos. Se requiere que las observaciones deben ser aleatorias, el tamaño total de la muestra de cada grupo debe de ser < 10% de la población a la que representay que los grupos (niveles del factor) deben de ser independientes entre ellos.
+
+Una intravarianza de 5.4 es una varianza pequeña y puede ser un indicador de la no independencia de los niveles del factor. 
+
+4.7. Adecuación del modelo
+
+Mostrar visualmente la adecuación del modelo ANOVA. Podéis utilizar plot sobre el modelo ANOVA
+resultante. En los apartados siguientes se pide la interpretación de estos gráficos.
+
+```{r}
+plot(anova_results)
+```
+
+El gráfico Q-Q, o gráfico cuantil-cuantil, es una herramienta gráfica que nos ayuda a evaluar si un conjunto de datos proviene de alguna distribución teórica, como Normal o exponencial. Por ejemplo, si ejecutamos un análisis estadístico que asume que nuestra variable dependiente está normalmente distribuida, podemos usar un gráfico Q-Q normal para verificar esa suposición. En el gráfico que se presenta en el resultado del anova, se puede ver como los puntos que conforman el gráfico Q-Q forman una linea homogénea entre ellos. Así, se puede asumir que los datos utilizados siquen una distribución normal. 
+
+La homocedasticidad, es una característica de un modelo de regresión lineal que implica que la varianza de los errores es constante a lo largo del tiempo. 
+
+Cuando se realiza un análisis residual, una "gráfica de residuos versus valores esperados" es la gráfica creada con más frecuencia. Es un diagrama de dispersión de los residuos en el eje y y los valores ajustados (respuestas estimadas) en el eje x. El gráfico se utiliza para detectar no linealidad, variaciones de error desiguales y valores atípicos. En la gráfica residuals vs Fitted values generada, se puede ver que los valores residuales se reparten de manera homogenea y se separan en los tres grupos esperados. Se puede observar también que para uno de los grupos pueden existir valores outliers. 
+
+
+El gráfico Scale location es similar al Residual vs Fitted a nivel interpretativo, ya que representa el cuadrado de los residuos versus los valores esperados. Se observa que a línea roja (media de los valores residuales) es aproximadamente horizontal. Entonces, la magnitud promedio de los residuos estandarizados no está cambiando mucho en función de los valores ajustados, algo que no ayuda a aceptar la asunción de homocedasticidad.
+
+Por último, en el caso del plot Residuals vs Leverage, se puede ver que la linea roja corresponde a la distanca de Cook, que expresa la distancia entre grupos de clasificación. Se puede ver que hay dos grupos más próximos entre ellos en cuanto a sus caracterísitcas (en este caso, ventas similares en función de la localización).
+
+
+#######################################################################################################
+
+5. ANOVA multifactorial
+
+A continuación, se quiere evaluar el efecto de más de un factor sobre la variable Sales donde el primer factor siempre será ShelveLoc. Primero, realizaremos el análisis con ShelveLoc y US en relación a las ventas (Sales). Posteriormente, el análisis multifactorial será con ShelveLoc y Urban en relación a Sales.
+
+5.1.1. Análisis visual de los efectos principales y posibles interacciones
+
+Dibujar en un gráfico la variable Sales en función de ShelveLoc y en función de US. El gráfico debe permitir evaluar si hay interacción entre los dos factores.
+
+```{r}
+library(ggplot2)
+library(magrittr) 
+library(dplyr) 
+# Step 1
+df_seats %>% 
+#Step 2
+group_by(ShelveLoc, US) %>% 
+#Step 3
+summarise(mean_sales = mean(Sales)) %>% 
+#Step 4
+ggplot(aes(x = ShelveLoc, y = mean_sales, fill = US)) +
+    geom_bar(stat = "identity") +
+    theme_classic() +
+    labs(
+        x = "ShelveLoc + US ",
+        y = "Average sales",
+        title = paste(
+            "Mean of sales vs ShelveLoc and US"
+        )
+    )
+
+
+
+```
+
+```{r}
+library(ggplot2)
+library(magrittr) 
+library(dplyr) 
+# Step 1
+df_seats %>% 
+#Step 2
+group_by(ShelveLoc, Urban) %>% 
+#Step 3
+summarise(mean_sales = mean(Sales)) %>% 
+#Step 4
+ggplot(aes(x = ShelveLoc, y = mean_sales, fill = Urban)) +
+    geom_bar(stat = "identity") +
+    theme_classic() +
+    labs(
+        x = "ShelveLoc + Urban ",
+        y = "Average sales",
+        title = paste(
+            "Mean of sales vs ShelveLoc and Urban"
+        )
+    )
+```
+
+5.1.2. Calcular el modelo
+```{r}
+us <- df_seats$US
+urban <- df_seats$Urban
+df_anova_2 <- data.frame(cbind(sales, shelveloc, us))
+stack_df_anova_2 <- stack(df_anova_2)
+df_anova_3 <- data.frame(cbind(sales, shelveloc, urban))
+stack_df_anova_3 <- stack(df_anova_3)
+plot(sales~shelveloc+us, data = stack_df_anova_2)
+```
+
+```{r}
+plot(sales~shelveloc+urban, data = stack_df_anova_3)
+```
+
+```{r}
+anova_multi <- aov(sales~shelveloc+us, data= stack_df_anova_2)
+summary(anova_multi)
+```
+Cuando la hipótesis nula es cierta SCE/K-1 y SCD/n-K son dos estimadores insesgados de la varianza poblacional y el cociente entre ambos se distribuye según una F de Snedecor con K-1 grados de libertad en el numerador y N-K grados de libertad en el denominador. Por lo tanto, si H0 es cierta es de esperar que el cociente entre ambas estimaciones será aproximadamente igual a 1, de forma que se rechazará H0 si dicho cociente difiere significativamente de 1.
+
+Las medias de las poblaciones son significativamente diferentes ya que F es significativamente diferente de 1. 
+
+```{r}
+832.8/115.7
+```
+
+F(2,1) = 81,20, p<0.05
+
+
+F = variabilidad entre grupos / variabilidad intra grupos
+
+```{r}
+anova_multi_urban <- aov(sales~shelveloc+urban, data= stack_df_anova_3)
+summary(anova_multi)
+```
+las medias de las poblaciones son significativamente diferentes con el valores de F obtenido. 
+
+```{r}
+832.8/0.6
+```
+
+el valor de eta^2 del segundo modelo es muy alto, y por lo tanto la calidad del modelo es muy baja. 
+
+F(2,1) = 76.85, p<0.05
+
+F(modelo_us) > F (modelo_urban)
+
+F = variabilidad entre grupos / variabilidad intra grupos
+
+Una F mayor implica un aumento de la variabilidad entre grupo y/o una disminución de la variabilidad intragrupos.
+
+```{r}
+plot(anova_multi)
+```
+Normal Q-Q: La distribución de los datos es normal.
+
+Residuals vs fitted: se pueden ver la posible existencia de valores outlier en alguno de los conjuntos de datos. La media de los residuos se mantiene muy cercana a 0.
+
+Es un conjunto de datos homocedastico.
+
+```{r}
+plot(anova_multi_urban)
+```
+
+Se observa una menor variabilidad en el error en el modelo anova_multi_urban. La distribución de los datos en el gráfico Normal Q-Q es mejor que en el modelo anterior. 
+
+
+6. Comparaciones múltiples
+
+```{r}
+library(DescTools)
+PostHocTest(anova_multi, which = NULL,
+            method = c("scheffe"),
+            conf.level = 0.95, ordered = FALSE)
+```
+```{r}
+library(DescTools)
+PostHocTest(anova_multi_urban, which = NULL,
+            method = c("scheffe"),
+            conf.level = 0.95, ordered = FALSE)
+```
+
+La prueba de Scheffe (también llamada procedimiento de Scheffe o método de Scheffe) es una prueba post-hoc utilizada en el análisis de varianza. Después de ejecutar ANOVA y obtener una estadística F significativa (es decir, rechazó la hipótesis nula de que las medias son las mismas), ejecuta la prueba de Sheffe para descubrir qué pares de medias son significativas. La prueba de Scheffe corrige alfa para comparaciones medias simples y complejas. Las comparaciones medias complejas implican comparar más de un par de medias simultáneamente.
+
+##########################################################################
+
+CONCLUSIONES:
+
+Se ha evaluado el set de datos de ventas de sillas en función de diferentes parámetros registrados por la empresa interesada. La primera parte de la actividad se centra en la visualización de los datos en forma de diferentes gráficos para encontrar posibles relaciones causales. 
+
+La segunda parte, se centra en la inferencia estadística. Se realiza una regresión logística para determinar que variables son más significativas en el aumento de las ventas de sillas. Se ha visto que una de las variables más influyentes es la localización de las sillas en la tienda. 
+
+Por último, se ha realizado un análisis anova para el análisis de las ventas respecto a la localización del producto en la tienda y tambien respecto a la variable urban y us. Se han elaborado dos modelos distintos para evaluar estas dos ultimas variables. 
+
+Los dos modelos nos dicen que las medias de los conjuntos de datos analizados son significativamente diferentes para cada nivel de las variables categóricas incluidas en los modelos. 
+
+
+
+
+
+

@@ -1,0 +1,620 @@
+---
+title: "A3_skobsar"
+author: "Stefanie Kobsar"
+date: "5/21/2020"
+output:
+   html_document:
+      toc: yes
+---
+
+1.1. Modelo de regresión lineal univariante
+
+a) Estimar por mínimos cuadrados ordinarios un modelo lineal que explique la variable peso del bebé al nacer en función del diámetro abdominal antes de nacer.
+Se evaluará la bondad del ajuste, a partir del coeficiente de determinación.
+b) Posteriormente, se dividirá la muestra en dos, según el sexo del bebé y se repetirá el estudio para cada muestra por separado.Razonar los resultados.
+```{r}
+df_bw <-  read.csv("BWprocessed.csv") 
+head(df_bw)
+```
+
+##### REGRESIÓN LINEAL #####
+
+Se representa la variables peso del bebé en función del diámetro abdominal. Se representa un diagrama de dispersión de ambas variables para poder determinar gráficamente la recta de ajuste y evaluar la bondad del mismo. 
+
+```{r}
+scatter.smooth(x=df_bw$AD, y=df_bw$BW, main="Peso bebé ~ Perímetro abdominal")  # scatterplot
+```
+
+Se observa que puede existir una correlación lineal entre las dos variables. Para confirmarlo, hay que obtener los coeficientes de la recta de ajuste y el valor de R^2, que determina la calidad del ajuste. Se considera un buen ajuste a partir de R^2 >=0,90. 
+```{r}
+linearMod <- lm(AD ~ BW, data=df_bw) 
+print(linearMod)
+```
+Se ha obtenido una recta de ajuste de la forma y = 0,01341x + 65,27981.
+
+```{r}
+summary(linearMod)
+```
+R^2=0,77 : El ajuste lineal no es significativo ya que R^2<0,90.
+
+p-valor : Para una significancia del 95%, tendría que ser un valor >1,96. Obtenemos un valor inferior a 1,96.
+
+El valor predicitivo de la recta obtenida podría ser mejorado con el análisis y descarte (siempre que sea posible) de los outliers. 
+
+```{r}
+boxplot(df_bw$AD)
+```
+
+```{r}
+boxplot(df_bw$BW)
+```
+Los valores del set de datos se consideran extremos (outliers) cuando están fuera del rango en una proporción de 1.5 veces del rango formado por los cuartiles más externos. Para valorar si es correcto eliminar los ouliers, hay que evaluar si es estadísitcamente correcto. Para ello existen múltiples tests, y en este caso se usará el test de grubbs para realizar la evaluación. 
+
+```{r}
+library(outliers)
+
+grubbs.test(df_bw$AD)
+
+```
+
+La hipotesis alternativa del test de Grubbs confirma significativamente que el valor 133mm  de AD es un outlier y se puede omitir. 
+
+```{r}
+grubbs.test(df_bw$BW)
+```
+
+La hipotesis alternativa del test de Grubbs confirma significativamente que el valor 4850g de BW es un outlier y se puede omitir. 
+
+
+```{r}
+df_ad <- df_bw$AD
+match(c(133),df_ad)
+
+df_BW <- df_bw$BW
+match(c(4850),df_BW)
+```
+Se vuelve a realizar el ajuste omitiendo los outliers
+```{r}
+
+df_outlier <- data.frame(df_BW, df_ad)
+df_outlier_2 <- df_outlier[-c(3,133), ] 
+colnames(df_outlier_2) <- c("ADnew", "BWnew")
+```
+
+```{r}
+scatter.smooth(x=df_outlier_2$ADnew, y=df_outlier_2$BWnew, main="Peso bebé ~ Perímetro abdominal")  # scatterplot
+```
+
+```{r}
+linearMod_2 <- lm(ADnew ~ BWnew , data=df_outlier_2) 
+print(linearMod_2)
+
+```
+
+Se ha obtenido una recta de ajuste de la forma y = 56,82x + -3079,18.
+
+```{r}
+summary(linearMod_2)
+```
+
+Se observa que haber eliminado los valores significativamente fera de tendencia (y sus valores pares en las respectivas variables) no han hecho que mejore el ajuste ya que R^2 no ha sufrido prácticamente variación. 
+
+El ajuste mediante una recta de regresión se considera una buena primera aproximación ya que si que se puede observar una tendencia lineal, pero este tipo de ajuste no podemos considerarlo significativo ni concluyente de cara a construir un modelo predictivo ya que el valor de R^2 se queda lejos de ser aceptable para cumplir este propósito.
+
+######################################################
+
+1.2. Modelo de regresión lineal múltiple (regresores cuantitativos)
+
+a) Estimar por mínimos cuadrados ordinarios un modelo lineal que explique la variable peso del bebé en función del diámetro abdominal y el diámetro biparietal. Se procederá a evaluar la bondad de ajuste a través del coeficiente de determinación ajustado. 
+
+Discutir si se produce una mejora del modelo.
+
+b) Estudiar la existencia o no de multicolinealidad entre las covariables del modelo anterior, AD y BPD.
+
+Ya hemos visto que existe una tendencia lineal entre BW y AD en el scatter plot de más arriba. Se hace el mismo análisis para BW en función de BPD.
+```{r}
+scatter.smooth(x=df_bw$BPD, y=df_bw$BW, main="Peso bebé ~ Diámetro biparietal")  # scatterplot
+```
+
+Se observa una ligera tendencia exponencial en la relación de estas dos variables. A continuación se analiza una posible multicolinealidad entre las covariables
+```{r}
+model_multi <- lm(log(df_bw$BPD)*df_bw$AD ~ df_bw$BW, data = df_bw)
+plot(model_multi)
+```
+
+```{r}
+print(model_multi)
+```
+
+```{r}
+summary(model_multi)
+```
+Se observa que la relación entres BW y la covariable AD-BPD ha incrementado la bondad del ajuste. 
+
+###########################################################
+
+1.3. Modelo de regresión lineal múltiple (regresores cuantitativos y cualitativos)
+
+a) Queremos conocer en qué medida se relaciona el peso, en función del diámetro abdominal, diámetro biparietal y las semanas de gestación. Se recodificará la variable Ge,en menor y mayor o igual de 35 semanas. Aplicar un modelo de regresión lineal múltiple y explicar el resultado.
+
+b) Ahora se calculará el modelo de regresión lineal que relacione el peso con diámetro abdominal y diámetro biparietal, para la muestra cuyos bebés han nacido antes de las 35 semanas. Posteriormente,se calculará el mismo modelo, para los bebés nacidos en la semana 35 y posteriores. En vista a los resultados obtenidos, ¿ existe relación con el apartado a)? Razonar la respuesta.
+
+```{r}
+#Variable Ge
+
+df_ge_equal <- subset(df_bw, Ge == 35)
+df_ge_minus <- subset(df_bw, Ge < 35)
+df_ge_plus <- subset(df_bw, Ge > 35)
+
+```
+Análisis peso - diametro abdominal - semanas de gestación = 35:
+
+No existe ningún caso en el que las semanas de gestación hayan sido exactamente 35 semanas. 
+```{r}
+nrow(df_ge_equal)
+```
+Análisis peso - diametro abdominal - semanas de gestación < 35:
+```{r}
+scatter.smooth(x=df_ge_minus$AD, y=df_ge_minus$BW, main="Peso bebé ~ Diametro abd [Ge<35]")  # scatterplot
+```
+```{r}
+scatter.smooth(x=df_ge_plus$AD, y=df_ge_plus$BW, main="Peso bebé ~ Diametro abd [Ge>35]")  # scatterplot
+```
+
+
+```{r}
+multi_ge_minus <- lm(df_ge_minus$AD ~ df_ge_minus$BW, data = df_ge_minus)
+summary(multi_ge_minus)
+```
+
+Análisis peso - diametro abdominal - semanas de gestación > 35:
+```{r}
+multi_ge_plus <- lm(df_ge_plus$AD ~ df_ge_plus$BW, data = df_ge_plus)
+summary(multi_ge_plus)
+```
+```{r}
+library(magrittr) 
+library(dplyr)    
+df_ge_dic <- df_bw
+df_ge_dic <- df_ge_dic %>%
+      mutate(Ge = ifelse(Ge < 35,0,1))
+
+df_ge_dic_low <- subset(df_bw, Ge = 0)
+df_ge_dic_high <- subset(df_bw, Ge = 0)
+
+multi_gedic_low <- lm(df_ge_dic_low$AD ~ df_ge_dic_low$BW, data = df_ge_dic_low)
+summary(multi_gedic_low)
+```
+
+```{r}
+multi_gedic_high <- lm(df_ge_dic_high$AD ~ df_ge_dic_high$BW, data = df_ge_dic_high)
+summary(multi_gedic_low)
+```
+
+Se observa un aumento en la bondad del modelo al partir el set de datos en dos categorias dicotómicas(Ge<35 == 0, Ge=>35 ==1). Se observa una diferencia de 0.4 puntos entre el primer ajuste de BW-AD y el de ajuste con Ge configurada como variable dicotómica. 
+
+Una explicación de esta diferencia puede ser que, al eliminar el detalle de la información del peso y convertirlo en dos rangos, la variabilidad de los datos (desviación estandard) de la variable peso deja de afectar en el ajuste. Este tipo de decisiones en el tratamiento de datos y los consiguientes ajustes de regresión son buenos como una primera aproximación en la búsqueda de relaciones causales. Para comprobar la significancia 
+
+
+###############################################################################
+
+1.4. Diagnosis del modelo
+
+Se tomará el modelo del apartado 1.2, que relaciona el peso del bebé en función del diámetro abdominal y eldiámetro biparietal.Para la diagnosis de este modelo se harán dos gráficos: uno con los valores ajustados frente a los residuos (que nos permitirá ver si la varianza es constante) y el gráfico cuantil-cuantil que compara los residuos del modelo con los valores de una variable que se distribuye normalmente(QQ plot). 
+
+Explicar conclusiones, a partir de los gráficos obtenidos.
+
+Respuesta:
+
+Se observa que al relacionar las variables AD-BPD mediante su multiplicación (y usando log(BPD) debido a la tendencia exponencial que mostraba en el gráfico BW-BPD), se ve un aumento significativo del coeficiente de correlación hasta 0,81. De todas maneras, sigue sin ser un modelo lo suficientemente bueno como para poder ofrecer predictibilidad. 
+
+Un posible solución sería acotar el rango en el que actua la función para aumentar su predicibilidad. En el gráfico Normal Q-Q del modelo desarrollado, se observa que la zona comprendida entre -1,5 y +1,5 del eje que representa los cuartiles teóricos representa unos datos más homogeneos en cuanto a su distribución normal. Es por ello que mediante un análisis de rangos (aumento de la sensibilidad del método) se podría determinar el valor mínimo y máximo a partir de los cuales el valor predictivo del modelo deja de ser válido. Es posible que para un rango de pesos concreto encontrasemos un ajuste de bondad mayor. Esta propuesta se deja planteada pero no se desarrollará ya que, en mi opinión, excede el objetivo de la práctica :).
+
+####################### Modelo de regresión logística ######################
+
+2.1. Estimación de OR (Odds Ratio)
+
+
+a1) bajo peso vs madre fumadora
+
+Se considera bajo peso BW<2,5kg
+
+
+TABLA DE CONTINGENCIA:
+
+```{r}
+df_bw_yes_low <- subset(df_bw, BW < 2500 & Sm == "S")
+df_bw_no_low <- subset(df_bw, BW < 2500 & Sm == "N")
+df_bw_yes_high <- subset(df_bw, BW >= 2500 & Sm == "S")
+df_bw_no_high <- subset(df_bw, BW >= 2500 & Sm == "N")
+
+con1 <- nrow(df_bw_yes_low)
+con2 <- nrow(df_bw_no_low)
+con3 <- nrow(df_bw_yes_high)
+con4 <- nrow(df_bw_no_high)
+
+cont_table_fn <- function(con1, con2, con3, con4)
+  {
+  table_1 <- matrix(c(con1, con2, con3, con4), ncol=2, byrow=T)
+  colnames(table_1) <- c("Variable 1 TRUE", "Variable 1 FALSE")
+  rownames(table_1) <- c("Peso < 2,5kg", "Peso > 2,5kg")
+  table <- as.table(table_1)
+  tab <- cbind(table_1, Total = rowSums(table_1))
+  cont_table <- rbind(tab, Total = colSums(tab))
+  print(cont_table)}
+
+table_1 <- cont_table_fn(con1, con2, con3, con4)
+```
+
+```{r}
+chisq.test(table_1)
+```
+
+El valor obtenido de chi cuadrado es mayor al tabulado, por tanto, la hipótesis nula queda descartada. Se puede decir con un grado de significancia de un 95% que no existe relación entre bajo peso al nacer y el hecho de que la madre sea fumadora
+
+###### ODD-RATIO ######
+
+```{r}
+odd_ratio_fn <- function(p)
+  {
+  odd_ratio <-  p/(1-p)
+  return(odd_ratio)
+  }
+
+#odd ratio de peso bajo, fumadora
+p1 = table_1[1]/table_1[7]
+or_1 <- odd_ratio_fn(p1)
+#odd ratio de peso bajo, no fumadora
+p2 = table_1[4]/table_1[7]
+or_2 <- odd_ratio_fn(p2)
+#odd ratio de peso alto, fumadora
+p3 = table_1[2]/table_1[8]
+or_3 <- odd_ratio_fn(p3)
+#odd ratio de peso alto, no fumadora
+p4 = table_1[5]/table_1[8]
+or_4 <- odd_ratio_fn(p4)
+```
+
+```{r}
+OR_table <- function(or1, or2, or3, or4)
+  {
+  table_1 <- matrix(c(or1, or2, or3, or4), ncol=2, byrow=T)
+  colnames(table_1) <- c("Variable 1 TRUE", "Variable 1 FALSE")
+  rownames(table_1) <- c("Peso < 2,5kg", "Peso > 2,5kg")
+  table <- as.table(table_1)
+  return(table)}
+OR_table(or_1, or_2, or_3, or_4)
+```
+El ratio de la probabilidad es directamente proporcional a la ocurrencia del evento estudiado. Un odd-ratio > 1 indica que es probable que se cumpla el valor que se estudia de una variable cuando está en presencia de otra variable. Así, odd-ratio nos da la información de cuán fuertemente están relacionadas unas variables con otras. 
+
+Madre fumadora tiene un odd-ratio=1,28 (OR>1). Por tanto la probabilidad en ocurrencia de tener un bebé que pese menos de 2,5kg en una madre fumadora es alta. 
+
+
+a2) bajo peso vs sexo
+
+##### TABLA CONTINGENCIA #####
+
+```{r}
+df_bw_F_low <- subset(df_bw, BW < 2500 & Sex == "F")
+df_bw_M_low <- subset(df_bw, BW < 2500 & Sex == "M")
+df_bw_F_high <- subset(df_bw, BW >= 2500 & Sex == "F")
+df_bw_M_high <- subset(df_bw, BW >= 2500 & Sex == "M")
+
+con1_sex <- nrow(df_bw_F_low)
+con2_sex <- nrow(df_bw_M_low)
+con3_sex <- nrow(df_bw_F_high)
+con4_sex <- nrow(df_bw_M_high)
+
+table_2 <- cont_table_fn(con1_sex, con2_sex, con3_sex, con4_sex)
+```
+```{r}
+chisq.test(table_2)
+```
+p-value es mas grande de 0,05. Esto implica aceptar la hipótesis nula, en la que se postula que las varianzas de ambos sets de datos son iguales. Por tanto, no se puede realizar una comparación de ocurrencia (numero de casos con un determinado peso en función del sexo) ya que son variables dependientes. 
+
+###### ODD RATIO ######
+
+```{r}
+#odd ratio de peso bajo, niña
+p1_2 = table_2[1]/table_2[7]
+or_1_2 <- odd_ratio_fn(p1_2)
+#odd ratio de peso bajo, niño
+p2_2 = table_2[4]/table_2[7]
+or_2_2 <- odd_ratio_fn(p2_2)
+#odd ratio de peso alto, niña
+p3_2 = table_2[2]/table_2[8]
+or_3_2 <- odd_ratio_fn(p3_2)
+#odd ratio de peso alto, niño
+p4_2 = table_2[5]/table_2[8]
+or_4_2 <- odd_ratio_fn(p4_2)
+
+OR_table(or_1_2, or_2_2, or_3_2, or_4_2)
+```
+
+Se calcula el OR a modo de ejemplo, sin ánimo de interpretar la relación de ocurrencia entre las variables. Se observa que OR>1 para las niñas tanto en peso <2,5kg y >2,5kg. Este dato carece de sentido ya que tiene una ocurrencia similar dos parámetros contrarios. Es por ello que no tiene sentido el análisis de las OR en este caso particular. 
+
+
+a3) semanas de gestación (Ge), (Se dividirá entre menor y mayor o igual de 35 semanas)
+
+```{r}
+#dataframe con Ge como variable dicotómica
+df_ge_dic
+#ge=0 bajo peso, ge=1 peso alto. 
+
+df_bw_Ge_0 <- subset(df_ge_dic, BW < 2500 & Ge == 0)
+df_bw_Ge_1 <- subset(df_ge_dic, BW < 2500 & Ge == 1)
+df_bw_Ge_high_0 <- subset(df_ge_dic, BW >= 2500 & Ge == 0)
+df_bw_Ge_high_1 <- subset(df_ge_dic, BW >= 2500 & Ge == 1)
+
+con1_Ge <- nrow(df_bw_Ge_0)
+con2_Ge <- nrow(df_bw_Ge_1)
+con3_Ge <- nrow(df_bw_Ge_high_0)
+con4_Ge <- nrow(df_bw_Ge_high_1)
+
+table_3 <- cont_table_fn(con1_Ge, con2_Ge, con3_Ge, con4_Ge)
+```
+
+```{r}
+chisq.test(table_3)
+```
+Se confirma H1, hipotesis en la que se plantea que las varianzas de ambos conjuntos de datos son significativamente diferentes y por lo tanto son variables independientes. 
+
+ #### ODD RATIO #### 
+ 
+```{r}
+#odd ratio de peso bajo, Ge<35
+p1_3 = table_3[1]/table_3[7]
+or_1_3 <- odd_ratio_fn(p1_3)
+#odd ratio de peso bajo, Ge>35
+p2_3 = table_3[4]/table_3[7]
+or_2_3 <- odd_ratio_fn(p2_3)
+#odd ratio de peso alto, Ge<35
+p3_3 = table_3[2]/table_3[8]
+or_3_3 <- odd_ratio_fn(p3_3)
+#odd ratio de peso alto, Ge>35
+p4_3 = table_3[5]/table_3[8]
+or_4_3 <- odd_ratio_fn(p4_3)
+
+OR_table(or_1_3, or_2_3, or_3_3, or_4_3)
+```
+Se observa que hay una fuerte relación (OR >> 1)entre un bebé con menos de 35 semanas de gestación, como cabía esperar. Por otra parte, también se observa una mayor ocurrencia que los bebés con más semanas de gestación presenten pesos mayores o iguales a 2,5kg. 
+
+b) Si no se hubiese recodificado la variable semanas de gestación, ¿podríamos seguir el procedimiento anterior para el cálculo de la OR?. Explicar la respuesta.
+
+No, porque la comparación de variables mediante una tabla de contingencia aplica para variables categóricas y no continuas. 
+
+c) Si queremos ver la relación entre bajo peso y lugar de procedencia, ¿podríamos seguir el procedimiento anterior para el cálculo de la OR? En el caso que la respuesta fuese negativa, ¿cuál sería una solución?.
+
+Podriamos seguir el anterior procedimiento comparando el peso del bebé con cada país y determinar una relación ponderada entre los diferentes parámetros demográficos y sociales relevantes en cada país. Para realizar un análisis conjunto de la misma variable y países diferentes, previamente se tendrá que haber construido un marco interpretativo común en la que se pueda comparar los datos de los bebés, ya que si no fuese así, se podría realizar una comparación sesgada. 
+
+Una vez constriudo el marco común, habria que limpiar los datos, normalizarlos y asegurarse que los datos restantes representen una muestra (N) lo suficientemente grande para llegar a una conlcusión feaciente. 
+
+Realmente es un análisis complicado, ya que cuando se trata de factores fisiológicos humanos, solo determinar las variables independientes en cada grupo de población es ya en si mismo todo un reto. 
+
+##################################################################################
+
+2.2. Modelo de regresión logística
+
+a) Estimar el modelo de regresión logística tomando como variable dependiente, tener bajo peso al nacer o no y siendo la variable explicativa, fumar o no. ¿Podemos considerar que el hecho de fumar es un factor de riesgo de bajo peso? Justifica tu respuesta. ¿Tiene relación con lo obtenido en el apartado anterior?
+
+```{r}
+df_logit <- df_bw
+
+library(dplyr)
+df_logit <- df_logit %>%
+      mutate(BW = ifelse(BW < 2500,0,1)) #Se configura la variable dependiente como 0, 1 para poder realizar el ajuste de regresión logística. 
+df_logit <- df_logit %>%
+      mutate(Ge = ifelse(Ge < 35,0,1))
+
+RLOG_a <- glm(formula = BW~Sm, df_logit, family = binomial(link = "logit"))
+
+summary(RLOG_a)
+
+```
+
+```{r}
+#Estadístico de prueba
+
+with(RLOG_a, null.deviance-deviance)
+```
+Test de significancia: chi cuadrado
+
+Ho: modelo no sig
+H1: modelo si sig
+```{r}
+#valor p del estadístico de prueba
+with(RLOG_a, pchisq(null.deviance-deviance, df.null-df.residual, lower.tail=FALSE))
+```
+Como p-value es menor al valor tabulado, se acepta H1 y el modelo se considera significativo. 
+
+Para evaluar en qué medida afecta la variable Sm, hay que hacer el análsis de los coeficientes. El modelo nos devuelve los coeficientes en su modo logarítmico. Para interpretarlos sobre 1, se tiene que calcular la exponencial de dichos factores. 
+
+```{r}
+#Cálculo de Odd Ratio con los coeficientes de la ecuación de regresión logística
+exp(coefficients(RLOG_a))
+```
+Cuando exp(coeficient) < 1, significa que la probabilidad de obtener un bebe con peso mayor a 2,5kg es baja. Cuanto más alejado esta el valor obtenido, menor es la probabilidad de éxito. En este caso, el valor obtenido es 0.008, lo que significa que la probabilidad de obtener un bebé con >2.5kg es muy baja si la madre es fumadora. 
+
+
+b) Añadimos al modelo anterior las variable continua diámetro abdominal (AD). ¿Se observa una mejora del modelo? Explicar. Realizad también el cálculo de las OR y su intervalo de confianza.
+
+```{r}
+RLOG_b <- glm(formula = BW~AD+Sm, df_logit, family = binomial(link = "logit"))
+
+summary(RLOG_b)
+```
+
+Test de significancia: chi cuadrado
+
+Ho: modelo no sig
+H1: modelo si sig
+
+```{r}
+#Estadístico de prueba
+
+with(RLOG_b, null.deviance-deviance)
+
+#valor p del estadístico de prueba
+with(RLOG_b, pchisq(null.deviance-deviance, df.null-df.residual, lower.tail=FALSE))
+```
+Se rechaza Ho. El modelo es significativo. 
+
+#### ODD RATIO ####
+
+```{r}
+exp(coefficients(RLOG_b))
+```
+
+OR(AD)=1,66
+OR(Sm)=0,004
+
+#### Intervalo de confianza ####
+
+
+
+
+
+
+c) Ahora añadimos al modelo anterior las variable City. Se tomará como ciudad de referencia Barcelona. Cálculo de las OR. ¿Se observa una mejora del modelo? Explicar.
+
+```{r}
+RLOG_c <- glm(formula = BW~AD+Sm+City, df_logit, family = binomial(link = "logit"))
+
+summary(RLOG_c)
+```
+
+Test de significancia: chi cuadrado
+
+Ho: modelo no sig
+H1: modelo si sig
+
+```{r}
+#Estadístico de prueba
+
+with(RLOG_b, null.deviance-deviance)
+
+#valor p del estadístico de prueba
+with(RLOG_b, pchisq(null.deviance-deviance, df.null-df.residual, lower.tail=FALSE))
+```
+Se rechaza Ho. El modelo es significativo. 
+
+```{r}
+exp(coefficients(RLOG_c))
+```
+ODD RATIOS: 
+
+AD = 1.71
+Sm = 0,003
+
+Granada = 2,54
+Madrid = 0,75
+Pamplona = 2,15
+Sevilla = 0,63
+Valencia = 0,67
+
+Se observa un ligero aumento en los OR de AD y Sm. Esto significa que estas variables tienen un peso ligeramente mayor en el modelo y que, al ser positivas, son directamente proporcionales a la variable de estudio.
+
+Granada y Pamplona tienen un OR>1. Esto significa que los bebés nacidos en estas ciudades tienen más probabilidades de tener un peso >2,5kg segun el modelo. Por otro lado, Madrid, Sevilla y Valencia tienen un OR<1, con lo que la probabilidad de éxito, aunque proporcional, es baja.
+
+
+#### Intervalo de confiaza ####
+```{r}
+exp(confint(RLOG_b))
+```
+
+
+####################################################################################
+
+2.3. Predicción
+
+Según el modelo del apartado 2.2 b), ¿cuál sería la probabilidad de bajo peso al nacer, si la madre es fumadora y AD es de 90?
+
+```{r}
+summary(RLOG_b)
+```
+
+```{r}
+#Ecuación del modelo: ln(pi/(1-pi))=-48,67005+0,50513*AD-5,60171*Sm
+prob_peso_alto <- exp(c(-48.67005+0.50513*90-5.60171*1))
+prob_peso_bajo <- c(1-prob_peso_alto)
+prob_peso_bajo
+```
+La probabilidad de obtener un bebé de bajo peso con 40cm de diámetro abdominal y madre fumadora es de un 99,9%.
+
+############################################
+
+2.4. Bondad del ajuste
+
+Usa el test de Hosman-Lemeshow para ver la bondad de ajuste del modelo final escogido. 
+```{r}
+#Escoger el modelo: Análisis de coeficientes AIC
+AIC_b <- AIC(RLOG_b)
+AIC_c <- AIC(RLOG_c)
+
+#el minimo valor de AIC lo tiene el modelo C
+
+diff_aic_cb <- AIC_c-AIC_b
+diff_aic_cb
+```
+
+if Δ𝑖<2, then there is substantial support for the 𝑖-th model (or the evidence against it is worth only a bare mention), and the proposition that it is a proper description is highly probable;
+
+if 2<Δ𝑖<4, then there is strong support for the 𝑖-th model;
+
+if 4<Δ𝑖<7, then there is considerably less support for the 𝑖-th model;
+models with Δ𝑖>10 have essentially no support.
+
+
+Δcb: Δ𝑖>7.Se escoge el modelo c frente al b.
+
+
+
+
+```{r}
+library(ResourceSelection)
+hl_test <- hoslem.test(RLOG_c$y, fitted(RLOG_c), g=10)
+hl_test
+```
+
+```{r}
+cbind(hl_test$expected, hl_test$observed)
+#El test funciona correctamente
+```
+
+###########################################
+
+Curva ROC:
+
+```{r}
+library(pROC)
+roc(df_logit$BW, RLOG_c$fitted.values, plot=TRUE, legacy.axes=TRUE, percent = TRUE, xlab="False Positive Precentage", ylab= "True Positive Perventage")
+```
+
+Output:
+
+Data: RLOG_c$fitted.values in 107 controls (df_logit$BW 0) < 193 cases (df_logit$BW 1).
+
+Area under the curve: 0.9816
+
+Una curva de características del operador receptor (ROC) es un gráfico que se utiliza para mostrar la capacidad de diagnóstico de los clasificadores binarios. 
+
+Una curva ROC se construye trazando la tasa positiva verdadera (TPR) contra la tasa positiva falsa (FPR). La TPR es la proporción de observaciones que se pronosticaron correctamente como positivas de todas las observaciones positivas (TP / (TP + FN)). Del mismo modo, la tasa de falsos positivos es la proporción de observaciones que se predice incorrectamente que son positivas de todas las observaciones negativas (FP / (TN + FP)).
+
+Un enfoque común es calcular el área bajo la curva ROC, que se abrevia a AUC. Es equivalente a la probabilidad de que una instancia positiva elegida al azar tenga una clasificación más alta que una instancia negativa elegida al azar. Por tanto, al haber obtenido un AUC de 98,16%, existe un 98,16% de probabilidad de obtener verdaderos positivos, frente a 1,84% de probabilidad de obtener un falso positivo. 
+
+
+############################################################################
+
+Conclusiones:
+
+Se ha visto a lo largo de la práctica multiples análisis de las variables del dataset proporcionado. 
+
+Los análisis empleando regresión lineal simple han permitido encontrar la relación de linearidad directa entre dos variables del dataset. Los resultados de cada uno de estos análisis se han comentado en cada apartado particular. Realizar regresiones lineales simples con variables de un dataset permite hacer una primera aproximación en el análisis de los datos, y asi poder ver posibles relaciones significativas y proporcionales. 
+
+En la segunda parte de la práctica se introduce el concepto de regresión logística, el cual permite determinar la probabilidad que tiene cada una de las variables en la variable de estudio elegid (y), en este caso BW. La variable y se codifica como categórica y con ello es posible determinar el éxito o el fracaso en cada caso analizado.  Como en la primera parte, se han realizado y explicado las conclusiones los análisis de cada apartado particular. 
+
+Se han analizado diferentes casos, utilizando un modelo para cada uno de ellos. Para finalizar el análisis, se han comparado los modelos utilizando el coeficiente AIC para escoger el de mejor ajuste y proceder a testearlo con el test de Hosman-Lemeshow. Finalmente, se ha analizado la curva ROC y su area bajo la curva. 
+
+El test de H-L nos dice que el método escogido nos da una evidencia significativa en solo el 69% de los casos (pvalue=0,688).
+
+Finalmente, la curva ROC nos dice que tenemos un 98% de probabilidades de obtener un verdadero positivo al usar el modelo escogido. 

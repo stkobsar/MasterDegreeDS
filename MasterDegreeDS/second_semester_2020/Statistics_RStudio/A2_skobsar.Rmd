@@ -1,0 +1,410 @@
+---
+title: "A2_skobsar"
+author: "Stefanie Kobsar"
+date: "4/30/2020"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+A2: ANÁLISIS DESCRIPTIVO E INFERENCIAL
+
+* ¿Cuál es el intervalo de confianza al 95% del peso al nacer?
+* ¿El peso medio al nacer difiere significativamente de 3.5kg?
+* ¿El peso al nacer de las niñas es diferente al de los niños?
+* ¿La proporción de nacimientos de niños es inferior a los nacimientos de niñas?
+* ¿Existe una relación entre bajo peso al nacer y el hecho de que la madre sea fumadora?
+```{r}
+df_bw <- read.csv("BWprocessed_A2.csv")
+
+head(df_bw)
+```
+
+## DISTRIBUCIONES DE LOS DATOS PARA CADA VARIABLE
+```{r}
+hist(df_bw$BW)
+```
+```{r}
+boxplot(df_bw$BPD)
+```
+```{r}
+hist(df_bw$AD)
+```
+```{r}
+library(ggplot2)
+
+ggplot(df_bw, aes(x=as.factor(Sex), fill=as.factor(Sex) )) + 
+  geom_bar( ) +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position="none")
+```
+```{r}
+library(ggplot2)
+
+ggplot(df_bw, aes(x=as.factor(Sm), fill=as.factor(Sm) )) + 
+  geom_bar( ) +
+  scale_fill_grey(start = 0.25, end = 0.70) +
+  theme(legend.position="none")
+```
+```{r}
+p <- ggplot(df_bw, aes(x= "", y=Ge)) + 
+  geom_boxplot() +
+  labs(title = "Ge boxplot distribution")
+
+p
+```
+
+CORRELACIÓN ENTRE LAS VARIABLES
+```{r}
+pairs(df_bw[,6:11], pch = 19, lower.panel = NULL)
+```
+Parece que existe una posible correlación entre BW vs BPD, BW vs AD, BPD vs AD, ya que se observa una tendencia en la distribución de los datos. 
+
+```{r}
+df_cor <- df_bw[,6:8]
+cor(df_cor, method = "pearson")
+```
+
+Se obtienen coeficientes de correlación de 0.77, 0.87 y 0.74, respectivamente. El coeficiente de correlación de Pearson es una medida de dependencia lineal entre dos variables cuanttativas independientes. El coeficiente de correlación, r, se encuentra en el intervalo 0<r<1, y ello significa que tienen una relación de proporcionalidad directa. Aun así, el coeficiente de correlación de pearson no es un test de significancia, asi que la correlación no es definitiva. 
+
+
+
+################ PESO MEDIO AL NACER ######################
+
+En este apartado, se evalúa la significancia de los valores del peso en contraste con el valor medio del peso. 
+
+En estadística, se llama intervalo de confianza a un par o varios pares de números entre los cuales se estima que estará cierto valor desconocido con un determinado nivel de confianza. Formalmente, estos números determinan un intervalo, que se calcula a partir de datos de una muestra, y el valor desconocido es un parámetro poblacional. El nivel de confianza representa el porcentaje de intervalos que tomados de 100 muestras independientes distintas contienen en realidad el valor desconocido. En estas circunstancias, α es el llamado error aleatorio o nivel de significación, esto es, el número de intervalos sobre 100 que no contienen el valor.
+
+
+```{r}
+sd_bw <- sd(df_bw$BW)
+sd_bw
+```
+
+La desviación standard es de 761g. Cualquier muestra tendrá una variación implícita de +- 761g.
+```{r}
+mean_bw <- mean(df_bw$BW)
+mean_bw
+```
+
+La media de BW en el conjunto de datos es 2661g.
+```{r}
+nobs_bw <- nrow(df_bw)
+nobs_bw
+```
+
+El intervalo de confianza será:
+```{r}
+int_conf_95 <- function(mean_data, desvest, obs) {
+  
+  lower_value <- mean_data-(1.96*(desvest/sqrt(obs)))
+  upper_value <- mean_data+(1.96*(desvest/sqrt(obs)))
+  print(lower_value)
+  print(upper_value)
+  }
+print("El intervalo de confianza se comprende entre:")
+int_conf_95(mean_data = mean_bw, desvest = sd_bw, obs = nobs_bw)
+```
+
+Se comprueba que el cáculo es correcto mediante el uso de la función t.test
+
+```{r}
+t.test(df_bw$BW)
+```
+
+Tenemos un valor medio para contrastar las hipotesis planteadas de μ = 3.5 kg, es decir, μ = 3500 g. La pregunta se plantea tal que: ¿El peso medio al nacer de los niños y niñas nacidos en España es de 3.5kg?
+
+
+En el caso que nos ocupa, α = 0,05, ya que el nivel de significancia del intervalo de confianza es del 95%. 
+
+Se plantea: 
+
+Ho: x = μ (hipótesis nula)
+H1: x diferente de μ (hipótesis alternativa)
+
+Se plantea la hipotesis alternativa como diferente de μ porque la zona de rechazo de un valor está compartida por las dos colas de la campana de Gaus. Antes de realizar la prueba de hipótesis, es necesario conocer si la distribución de la muestra es normal. 
+```{r}
+library(normtest)
+jb.norm.test(df_bw$BW)
+```
+
+
+Como p>0.05, se concluye que la distribución es normal.
+
+##############  PRUEBA DE HIPÓTESIS   ###########
+
+```{r}
+#Cálculo del valor de Z
+ref_value <- c(3500)
+z_value_hip <- function(mean_data, ref_val, sd, tot_obs){
+  
+  z <- (mean_data-ref_val)/(sd/sqrt(tot_obs))
+  print(z)
+}
+
+z_value_hip(mean_bw, ref_value, sd_bw, nobs_bw)
+```
+
+Se obtiene un valor de Z=-19,1. El rango de valores de Z en los que Ho se acepta se comprende entre -1,96 y +1,96. En este caso, el valor de Z obtenido en la prueba de hipótesis se encuentra fuera de este rango, y por tanto se puede rechazar Ho. Así, la media muestral es significativamente diferente de 3.5kg.
+
+Además, ya se calculó antes el valor del intervalo de confianza para BW. El valor de 3.5kg no entra dentro de dicho intervalo (2574.687 kg - 2746.897 kg).
+
+
+###################  CONTRASTE DE PESO MEDIO ENTRE NIÑOS Y NIÑAS ################
+
+```{r}
+library(dplyr)
+
+df_girls <- subset(df_bw, Sex == "F")
+df_boys <- subset(df_bw, Sex == "M")
+hist(df_girls$BW)
+```
+```{r}
+hist(df_boys$BW)
+```
+
+Test de normalidad:
+
+```{r}
+library(normtest)
+jb.norm.test(df_girls$BW)
+```
+```{r}
+library(normtest)
+jb.norm.test(df_boys$BW)
+```
+
+
+Los dos subsets de datos siguen una distrubución normal, y por lo tanto, pueden ser comparados entre ellos. 
+
+```{r}
+mean_boy <- mean(df_boys$BW)
+mean_girl <- mean(df_girls$BW)
+var_boy <- var(df_boys$BW)
+var_girl <- var(df_girls$BW)
+num_obs_boys <- nrow(df_boys)
+num_obs_girls <- nrow(df_girls)
+```
+
+Intervalo de confianza para los valores de peso de los niños:
+```{r}
+int_conf_95(mean_boy, var_boy, num_obs_boys)
+```
+
+Intervalo de confianza para los valores de peso de los niños:
+```{r}
+int_conf_95(mean_girl, var_girl, num_obs_girls)
+```
+
+Se establecen las hipótesis:
+
+Ho: μ1 - μ2 = 0
+H1: μ1 - μ2 diferente de 0
+
+Para calcular el estadístico de contraste de dos muestras independientes, se hará una nueva función:
+```{r}
+z_two_samples <- function(mean1, mean2, var1, var2, n1, n2){
+  std_error <- sqrt((var1/n1)+(var2/n2))
+  z <- (mean1-mean2)/(std_error)
+  print(z)
+  }
+
+z_two <- z_two_samples(mean_girl, mean_boy, var_girl, var_boy, num_obs_girls, num_obs_boys)
+```
+
+Cálcuo del p-valor
+```{r}
+PZ <- pnorm(z_two)
+p_value <- 2*PZ
+p_value
+```
+
+En este caso se ha obtenido un p-valor = 0.18, que es mayor que 0.05. En este caso, no se puede rechazar la hipótesis nula, o lo que es lo mismo, las medias de ambas muestras son significativamente diferentes con un 95% de confianza. 
+
+Comprobación del cálculo usando la función t.test:
+```{r}
+t.test(df_boys$BW, df_girls$BW)
+```
+
+
+################  PROPORCIÓN DE NIÑOS Y NIÑAS  #######################
+
+PREGUNTA:
+
+¿La proporción de nacimientos de niños es inferior a la de los nacimientos de niñas?
+
+Se ha de realizar una prueba de hipótesis, pero esta vez calculándolo con las proporciones. 
+
+Cálculo de proporciones:
+```{r}
+prop_boy <- nrow(df_boys)/nrow(df_bw)
+prop_girl <- nrow(df_girls)/nrow(df_bw)
+cat("Proporción de niños: ", prop_boy )
+
+```
+```{r}
+cat("Proporcion de niñas: ", prop_girl)
+```
+
+Prueba de hipótesis para las proporciones de dos muestras independientes:
+
+Ho: p1 =< p2
+H1: p1 > p2
+```{r}
+z_prop_two_samp <- function(p1, p2, n1, n2){
+  p <- (n1*p1+n2*p2)/(n1+n2)
+  Z_prop_two <- (p1-p2)/sqrt((p*(1-p)*((1/n1)+(1/n2))))
+}
+
+z_prop <- z_prop_two_samp(p1 = prop_boy, p2 = prop_girl, n1 = num_obs_boys, n2 = num_obs_girls)
+```
+
+
+```{r}
+PZ <- pnorm(z_prop)
+p_value <- 2*PZ
+p_value
+```
+En este caso, p-valor = 0,092, que es mayor que alpha = 0.05. En este caso, se acepta H1, o lo que es lo mismo, la proporción de niños es significativamente mayor que la proporción de niñas. 
+
+
+#################### RELACIÓN ENTRE BAJO PESO Y MADRE FUMADORA ####################
+
+¿Existe relación entre bajo peso al nacer y el hecho de que la madre sea fumadora?
+
+Bajo peso se consideran pesos < 2.5kg
+
+Tablas de contingencia que relaciona peso respecto a si la madre es fumadora o no. 
+```{r}
+df_bw_yes_low <- subset(df_bw, BW < 2500 & Sm == "S")
+df_bw_no_low <- subset(df_bw, BW < 2500 & Sm == "N")
+df_bw_yes_high <- subset(df_bw, BW > 2500 & Sm == "S")
+df_bw_no_high <- subset(df_bw, BW > 2500 & Sm == "N")
+```
+HIPÓTESIS:
+
+Ho: var1 = var2 (muestras dependientes)
+H1: var1 diferente de var2 (muestras independientes)
+
+TABLA DE CONTINGENCIA:
+
+```{r}
+con1 <- nrow(df_bw_yes_low)
+con2 <- nrow(df_bw_no_low)
+con3 <- nrow(df_bw_yes_high)
+con4 <- nrow(df_bw_no_high)
+
+cont_table_fn <- function(con1, con2, con3, con4)
+  {
+table_1 <- matrix(c(con1, con2, con3, con4), ncol=2, byrow=T)
+colnames(table_1) <- c("Fumadora", "No fumadora")
+rownames(table_1) <- c("Peso < valor interés", "Peso > valor interés")
+table <- as.table(table_1)
+tab <- cbind(table_1, Total = rowSums(table_1))
+cont_table <- rbind(tab, Total = colSums(tab))
+print(cont_table)
+}
+
+table_1 <- cont_table_fn(con1, con2, con3, con4)
+```
+El grado de libertad será n=1. El valor de interés es 2500g
+
+```{r}
+my_chisq <- function(table){
+ 
+  #table 1 is your contingency table 
+  freqs <- c((table_1[3]*table_1[7])/table_1[9], (table_1[3]*table_1[8])/table_1[9],  (table_1[6]*table_1[7])/table_1[9], (table_1[6]*table_1[8])/table_1[9])
+
+observations <- c(table_1[1], table_1[2], table_1[4], table_1[5])
+
+dif_obs_frec <- observations - freqs
+dif_square <- dif_obs_frec^2
+dif_freq <- dif_square/freqs
+chi_square <- sum(dif_freq)
+print(chi_square)
+}
+
+chi_sq <- my_chisq(table_1)
+```
+
+
+```{r}
+chi_table_val <- qchisq(0.95, 1)
+chi_sq > chi_table_val
+```
+
+El valor obtenido de chi cuadrado es mayor al tabulado, por tanto, la hipótesis nula queda descartada. Se puede decir con un grado de significancia de un 95% que no existe relación entre bajo peso al nacer y el hecho de que la madre sea fumadora
+
+```{r}
+chisq.test(table_1)
+```
+
+######################## CASOS DE BAJO PESO SEMANA 36############################
+
+Realizad el mismo análisis para los nacimientos a partir de la semana 36. Para realizar este análisis, se considerará bajo peso al nacer los casos que se encuentren en el primer cuartil del peso, considerando solo los casos con semanas de gestación superiores a 36.
+
+¿Podemos concluir que se presenta el mismo patrón de relación (de independencia o dependencia entre las variables) que en el caso anterior? Interpretad los resultados.
+
+Los cuartiles son los tres valores de la variable que dividen a un conjunto de datos ordenados en cuatro partes iguales. Q1, Q2 y Q3 determinan los valores correspondientes al 25%, al 50% y al 75% de los datos. Q2 coincide con la mediana.
+
+```{r}
+q1_bw <- (median(df_bw$BW)*0.25)/0.5 
+cat("Peso correspondiente al primer cuartil: ", q1_bw, "g")
+```
+
+
+```{r}
+df_ge_yes_low <- subset(df_bw, BW < 1340 & Sm == "S" &  Ge >= 36)
+df_ge_no_low <- subset(df_bw, BW < 1340 & Sm == "N" &  Ge >= 36)
+df_ge_yes_high <- subset(df_bw, BW > 1340 & Sm == "S" &  Ge >= 36)
+df_ge_no_high <- subset(df_bw, BW > 1340 & Sm == "N" &  Ge >= 36)
+
+con1_ge <- nrow(df_ge_yes_low)
+con2_ge <- nrow(df_ge_no_low)
+con3_ge <- nrow(df_ge_yes_high)
+con4_ge <- nrow(df_ge_no_high)
+```
+
+```{r}
+table_2 <- cont_table_fn(con1_ge, con2_ge, con3_ge, con4_ge)
+```
+
+
+```{r}
+chi_sq_2 <- my_chisq(table_2)
+```
+
+```{r}
+chi_table_val <- qchisq(0.95, 1)
+chi_sq_2 > chi_table_val
+```
+
+De nuevo, el valor obtenido de chi cuadrado es mayor al tabulado, por tanto, la hipótesis nula queda descartada. Se puede decir con un grado de significancia de un 95% que no existe relación entre bajo peso al nacer y el hecho de que la madre sea fumadora también para gestaciones iguales o superiores a 36 semanas. 
+
+
+
+
+
+####################  CONCLUSIONES  #############################
+
+1. ¿Cuál es el intervalo de confianza al 95% del peso al nacer?
+
+El intervalo de confianza es 2574.687 kg - 2746.897 kg.
+
+2. ¿El peso medio al nacer difiere significativamente de 3.5kg?
+
+Se obtiene un valor de Z=-19,1. El rango de valores de Z en los que Ho se acepta se comprende entre -1,96 y +1,96. En este caso, el valor de Z obtenido en la prueba de hipótesis se encuentra fuera de este rango, y por tanto se puede rechazar Ho. Así, la media muestral es significativamente diferente de 3.5kg.
+
+3. ¿El peso al nacer de las niñas es diferente al de los niños?
+
+En este caso se ha obtenido un p-valor = 0.18, que es mayor que 0.05. En este caso, no se puede rechazar la hipótesis nula, o lo que es lo mismo, las medias de ambas muestras son significativamente diferentes con un 95% de confianza. 
+
+4. ¿La proporción de nacimientos de niños es inferior a los nacimientos de niñas?
+
+En este caso, p-valor = 0,092, que es mayor que alpha = 0.05. En este caso, se acepta H1, o lo que es lo mismo, la proporción de niños es significativamente mayor que la proporción de niñas. 
+
+5. ¿Existe una relación entre bajo peso al nacer y el hecho de que la madre sea fumadora?
+
+el valor obtenido de chi cuadrado es mayor al tabulado, por tanto, la hipótesis nula queda descartada. Se puede decir con un grado de significancia de un 95% que no existe relación entre bajo peso al nacer y el hecho de que la madre sea fumadora en las dos casuísticas planteadas. 
